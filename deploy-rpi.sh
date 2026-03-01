@@ -40,13 +40,14 @@ if ! command -v docker &> /dev/null; then
 fi
 echo -e "${GREEN}✓ Docker installed${NC}"
 
-# Check Docker Compose
-if ! command -v docker-compose &> /dev/null; then
-    echo -e "${RED}✗ Docker Compose not installed${NC}"
-    echo "Install with: sudo pip3 install docker-compose"
+# Check Docker Compose (either docker-compose or docker compose)
+if ! command -v docker-compose &> /dev/null && ! docker compose version &> /dev/null; then
+    echo -e "${RED}✗ Docker Compose not available${NC}"
+    echo "Install with: sudo apt install -y docker-compose"
+    echo "Or: sudo pip3 install docker-compose"
     exit 1
 fi
-echo -e "${GREEN}✓ Docker Compose installed${NC}"
+echo -e "${GREEN}✓ Docker Compose available${NC}"
 
 # Check if in PriceGhost directory
 if [ ! -f "docker-compose.rpi.yml" ]; then
@@ -56,6 +57,13 @@ if [ ! -f "docker-compose.rpi.yml" ]; then
 fi
 echo -e "${GREEN}✓ PriceGhost files found${NC}"
 echo ""
+
+# Determine docker compose command (new format or old)
+if command -v docker-compose &> /dev/null; then
+    DOCKER_COMPOSE="docker-compose"
+else
+    DOCKER_COMPOSE="docker compose"
+fi
 
 # Get Ollama server information
 echo -e "${BLUE}🌐 Ollama Configuration${NC}"
@@ -126,8 +134,8 @@ echo -e "${BLUE}🚀 Building and starting services...${NC}"
 echo "This may take 15-30 minutes on first run (downloading images, building)..."
 echo ""
 
-docker-compose -f docker-compose.rpi.yml down 2>/dev/null || true
-docker-compose -f docker-compose.rpi.yml up -d --build
+$DOCKER_COMPOSE -f docker-compose.rpi.yml down 2>/dev/null || true
+$DOCKER_COMPOSE -f docker-compose.rpi.yml up -d --build
 
 # Wait for services to be ready
 echo ""
@@ -136,8 +144,8 @@ MAX_ATTEMPTS=60
 ATTEMPT=0
 
 while [ $ATTEMPT -lt $MAX_ATTEMPTS ]; do
-    if docker-compose -f docker-compose.rpi.yml ps | grep -E "priceghost-(backend|frontend|db)" | grep -q "Up"; then
-        READY_SERVICES=$(docker-compose -f docker-compose.rpi.yml ps | grep -E "priceghost-(backend|frontend|db)" | grep "Up" | wc -l)
+    if $DOCKER_COMPOSE -f docker-compose.rpi.yml ps | grep -E "priceghost-(backend|frontend|db)" | grep -q "Up"; then
+        READY_SERVICES=$($DOCKER_COMPOSE -f docker-compose.rpi.yml ps | grep -E "priceghost-(backend|frontend|db)" | grep "Up" | wc -l)
         if [ $READY_SERVICES -eq 3 ]; then
             echo -e "${GREEN}✓ All services are running${NC}"
             break
@@ -154,7 +162,7 @@ fi
 
 echo ""
 echo -e "${BLUE}📊 Service Status:${NC}"
-docker-compose -f docker-compose.rpi.yml ps
+$DOCKER_COMPOSE -f docker-compose.rpi.yml ps
 echo ""
 
 # Get PI IP
