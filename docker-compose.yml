@@ -30,6 +30,12 @@ services:
       JWT_SECRET: ${JWT_SECRET:-change-this-in-production-use-strong-secret}
       PORT: 3001
       NODE_ENV: production
+      # ────────────────────────────────────────────────
+      # Add these two blocks for Ollama access
+      OLLAMA_BASE_URL: http://localhost:11434
+      # Optional: some Ollama client libraries use this name instead
+      # OLLAMA_API_BASE: http://host.docker.internal:11434
+      # ────────────────────────────────────────────────
     ports:
       - "3001:3001"
     depends_on:
@@ -42,7 +48,7 @@ services:
     image: ghcr.io/clucraft/priceghost-frontend:latest
     container_name: priceghost-frontend
     ports:
-      - "80:80"
+      - "8089:80"
     depends_on:
       - backend
     restart: unless-stopped
