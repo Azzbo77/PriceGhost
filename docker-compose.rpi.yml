@@ -27,6 +27,8 @@ services:
           memory: 512M
         reservations:
           memory: 256M
+    networks:
+      - priceghost
 
   # Backend API (ARM-compatible build)
   backend:
